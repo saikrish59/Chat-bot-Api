@@ -1,0 +1,40 @@
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+
+# Configure SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_connection_string'
+db = SQLAlchemy(app)
+
+# Define the Equipment model
+class Equipment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    attuid = db.Column(db.String(50), nullable=False)
+    session_id = db.Column(db.String(50), nullable=False)
+    assetID = db.Column(db.String(50), nullable=False)
+    return_time = db.Column(db.DateTime)
+
+# API endpoint to create a new equipment loan record
+@app.route('/create_loan_record', methods=['POST'])
+def create_loan_record():
+    attuid = request.json.get('attuid')
+    session_id = request.json.get('session_id')
+    assetID = request.json.get('assetID')
+
+    # Validate input parameters
+    if not attuid or not session_id or not assetID:
+        return jsonify({'error': 'Missing required parameters'}), 400
+
+    try:
+        # Create a new record
+        new_record = Equipment(attuid=attuid, session_id=session_id, assetID=assetID)
+        db.session.add(new_record)
+        db.session.commit()
+        return jsonify({'successful': True}), 201
+    except Exception as e:
+        # Handle error
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
